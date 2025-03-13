@@ -5,10 +5,11 @@ import os
 from tkinter import *
 from tkinter import ttk, filedialog, messagebox
 import re
-LOG_FILE = "logs.txt"
-CSV_FILE = "logs.csv"
+import queue
+
 # Hàng đợi các bài post cần kiểm tra
 task_queue = queue.Queue()
+update_queue = queue.Queue()
 output_file = None  # File lưu kết quả
 # 🛠 Hàm kiểm tra trạng thái bài viết Facebook
 def check_facebook_post_status(post_url, post_id):
@@ -64,19 +65,23 @@ def worker():
 
         status, group_id = check_facebook_post_status(post_url, post_id)
 
-        tree.item(item, values=(stt, post_url, post_id, status))
+        #tree.item(item, values=(stt, post_url, post_id, status))
+        # Đẩy kết quả vào hàng đợi thay vì cập nhật trực tiếp
+        update_queue.put((item, (stt, post_url, post_id, status)))
 
-        # Lưu group_id nếu bài viết còn live
-        print(f"🛠 Đang kiểm tra: {post_id} - Trạng thái: {status}")
         if status.startswith("✅ Live"):
-            print(f"📝 Ghi {group_id} vào {output_file}")
+
             with open(output_file, "a", encoding="utf-8") as f:
                 f.write(group_id + "\n")
-                print(f"📂 Đã ghi group_id {group_id} vào file {output_file}")
-
-        # 🛠 Cập nhật số lượng live liên tục
-        root.after(0, update_status)
         task_queue.task_done()
+def update_ui():
+    """Cập nhật UI từ hàng đợi để tránh đơ."""
+    while not update_queue.empty():
+        item, new_values = update_queue.get()
+        tree.item(item, values=new_values)
+    update_status()
+    root.after(100, update_ui)  # Lặp lại sau 100ms để cập nhật tiếp
+
 
 # 🛠 Hàm chạy kiểm tra đa luồng
 def check_live():
@@ -96,7 +101,7 @@ def check_live():
     for t in threads:
         t.join()
 
-    update_status()  # Đảm bảo cập nhật sau khi chạy xong
+    root.after(100, update_ui)  # Bắt đầu cập nhật UI liên tục
 
     # 🛠 Thông báo hoàn thành
     messagebox.showinfo("Hoàn thành", f"✅ Kiểm tra xong! Kết quả lưu tại: {output_file}")

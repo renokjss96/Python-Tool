@@ -1,0 +1,5 @@
+ |  |  |  | ⛔ Đã dừng tất cả các luồng! | Chưa kiểm tra
+ |  |  |  | ⛔ Đã dừng tất cả các luồng! | Chưa kiểm tra
+ |  |  | Không áp dụng | ✅ Check Xong! | Chưa kiểm tra
+ |  |  | Không áp dụng | ✅ Check Xong! | Chưa kiểm tra
+ |  |  | Không áp dụng | ✅ Check Xong! | Chưa kiểm tra
